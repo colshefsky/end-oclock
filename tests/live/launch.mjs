@@ -16,7 +16,9 @@ const browsers = {
 
 export async function launch(name = 'chrome', port = 9333) {
   const profile = mkdtempSync(join(tmpdir(), 'eoc-live-'));
+  const viaFlag = name === 'vivaldi'; // not Google-branded: still honors --load-extension
   const proc = spawn(browsers[name], [
+    ...(viaFlag ? [`--load-extension=${EXT}`] : []),
     `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, '--enable-unsafe-extension-debugging',
     '--no-first-run', '--no-default-browser-check', '--window-size=1280,860', '--autoplay-policy=no-user-gesture-required', 'about:blank',
   ], { stdio: 'ignore' });
@@ -27,7 +29,15 @@ export async function launch(name = 'chrome', port = 9333) {
   }
   if (!browser) throw new Error('could not connect');
   const cdp = await browser.newBrowserCDPSession();
-  const { id: extId } = await cdp.send('Extensions.loadUnpacked', { path: EXT });
+  let extId;
+  if (viaFlag) {
+    for (let i = 0; i < 40 && !extId; i++) {
+      const { targetInfos } = await cdp.send('Target.getTargets');
+      const sw = targetInfos.find((t) => t.url.startsWith('chrome-extension://') && t.type === 'service_worker');
+      if (sw) extId = new URL(sw.url).host;
+      else await new Promise((r) => setTimeout(r, 250));
+    }
+  } else ({ id: extId } = await cdp.send('Extensions.loadUnpacked', { path: EXT }));
   const ctx = browser.contexts()[0];
   const close = async () => { await browser.close().catch(() => {}); proc.kill(); };
   const storage = async () => {

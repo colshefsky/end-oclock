@@ -1,7 +1,7 @@
 import { launch } from './launch.mjs';
 const name = process.argv[2] ?? 'chrome';
 const shots = process.argv[3];
-const { browser, ctx, extId } = await launch(name);
+const { browser, ctx, extId } = await launch(name, 9444);
 console.log('extension loaded:', extId);
 const page = ctx.pages()[0] ?? await ctx.newPage();
 // Install opens the options page in a new tab; keep it.
