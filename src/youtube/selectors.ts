@@ -42,6 +42,7 @@ export const SEL = {
   collectionInside: 'yt-collection-thumbnail-view-model, yt-collections-stack',
   shortInside: 'a[href^="/shorts/"], ytm-shorts-lockup-view-model, ytm-shorts-lockup-view-model-v2',
   watchLink: 'a[href*="watch?v="]',
+  chip: 'yt-chip-cloud-chip-renderer, chip-view-model, ytd-feed-filter-chip-bar-renderer yt-chip-cloud-chip-renderer',
   player: '#movie_player',
   mainVideo: '#movie_player video.html5-main-video, #movie_player video, video.html5-main-video',
   adShowing: '.ad-showing',

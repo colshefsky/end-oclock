@@ -7,7 +7,7 @@ import {
 import { formatClock } from '../core/time';
 import { sessionItem, settingsItem, safeStorage, onContextLost } from '../shared/storage';
 import { t } from '../shared/i18n';
-import { applyTiles } from './tiles';
+import { applyTiles, hideShortsChips } from './tiles';
 import { setFlags, markOff, shortsRedirect } from './page-flags';
 import { onBridge } from './bridge';
 import { createWatchMonitor } from './watch';
@@ -50,14 +50,22 @@ export function createOrchestrator(deps: OrchestratorDeps) {
   const lengths = new Map<string, number>();
   const cleanups: Array<() => void> = [];
 
-  /** Read-modify-write the shared session; ignores writes for a session that was replaced meanwhile. */
-  async function mutate(fn: (s: Session) => Session): Promise<void> {
-    const latest = await safeStorage(() => sessionItem.getValue());
-    if (!latest || !session || latest.id !== session.id) return;
-    const next = fn(latest);
-    if (next === latest) return;
-    session = next;
-    await safeStorage(() => sessionItem.setValue(next));
+  /**
+   * Read-modify-write the shared session; ignores writes for a session that was replaced meanwhile.
+   * Writes from this tab are queued so two of them never interleave and overwrite each other.
+   */
+  let queue: Promise<void> = Promise.resolve();
+  function mutate(fn: (s: Session) => Session): Promise<void> {
+    const run = async () => {
+      const latest = await safeStorage(() => sessionItem.getValue());
+      if (!latest || !session || latest.id !== session.id) return;
+      const next = fn(latest);
+      if (next === latest) return;
+      session = next;
+      await safeStorage(() => sessionItem.setValue(next));
+    };
+    queue = queue.then(run, run);
+    return queue;
   }
 
   const endNow = (reason: EndReason) => mutate((s) => endSession(s, reason, now()));
@@ -194,6 +202,7 @@ export function createOrchestrator(deps: OrchestratorDeps) {
     if (!force && at - lastTiles < 150) return;
     lastTiles = at;
     applyTiles(document, timeLeftMs(session, at), lengths);
+    hideShortsChips(document);
   }
 
   async function tick(): Promise<void> {
@@ -286,12 +295,12 @@ export function createOrchestrator(deps: OrchestratorDeps) {
     // Re-render once a minute so cooldown/gate transitions happen without storage changes.
     let lastPhase = phaseOf(session, now());
     const timer = setInterval(() => {
-      void tick();
+      tick().catch((e: unknown) => console.error('[eoc] tick failed', e));
       const p = phaseOf(session, now());
       if (p !== lastPhase) { lastPhase = p; render(); }
     }, 1000);
     cleanups.push(() => clearInterval(timer));
   }
 
-  return { start, stop, tick, render, staleAfterMs: HEARTBEAT_STALE_MS };
+  return { start, stop, tick, render, mutate, staleAfterMs: HEARTBEAT_STALE_MS };
 }

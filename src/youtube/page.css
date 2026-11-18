@@ -58,3 +58,8 @@ html[data-eoc-session]:not([data-eoc-off]) :is(
 ) *) {
   display: none !important;
 }
+
+/* Chips we hid by text (see hideShortsChips). */
+html:not([data-eoc-off]) :is(yt-chip-cloud-chip-renderer, chip-view-model)[hidden] {
+  display: none !important;
+}

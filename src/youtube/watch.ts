@@ -29,12 +29,13 @@ export function createWatchMonitor(deps: WatchDeps) {
 
   const video = () => document.querySelector<HTMLVideoElement>(SEL.mainVideo);
 
-  function decide(id: string, v: HTMLVideoElement): void {
+  function decide(id: string, v: HTMLVideoElement, ad: boolean): void {
     const d = details.get(id);
     let live = d?.isLive ?? false;
     let seconds = d?.lengthSeconds ?? null;
     if (!d) {
-      if (Date.now() - seenAt < FALLBACK_AFTER_MS) return;
+      // Without YouTube's data, only the <video> can tell us the length, and during an ad that's the ad's.
+      if (ad || Date.now() - seenAt < FALLBACK_AFTER_MS) return;
       if (v.duration === Infinity) live = true;
       else if (Number.isFinite(v.duration) && v.duration > 0) seconds = v.duration;
       else return;
@@ -50,7 +51,8 @@ export function createWatchMonitor(deps: WatchDeps) {
       commit(id, true, 0);
       return;
     }
-    const remainingMs = Math.max(0, Math.round((seconds! - (v.currentTime || 0)) * 1000));
+    const position = ad ? 0 : v.currentTime || 0;
+    const remainingMs = Math.max(0, Math.round((seconds! - position) * 1000));
     if (remainingMs <= deps.getTimeLeft()) commit(id, false, remainingMs);
     else {
       v.pause();
@@ -85,9 +87,9 @@ export function createWatchMonitor(deps: WatchDeps) {
       if (!v) return;
       if (v.loop) v.loop = false;
       document.querySelector<HTMLElement>(SEL.autoplayOn)?.click();
-      if (document.querySelector(`${SEL.player}${SEL.adShowing}`)) return;
-      if (decidedId !== id) decide(id, v);
-      if (committedId !== id) return;
+      const ad = document.querySelector(`${SEL.player}${SEL.adShowing}`) != null;
+      if (decidedId !== id) decide(id, v, ad);
+      if (ad || committedId !== id) return;
       const now = !v.paused && !v.ended;
       if (now !== playing) {
         playing = now;

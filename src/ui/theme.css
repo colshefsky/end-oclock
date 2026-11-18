@@ -1,6 +1,6 @@
 /* End O'Clock theme. Values match the approved mockup artboards. Used inside the YouTube shadow root
    (:host) and on the extension's own pages (.eoc-page). */
-:host, .eoc-page {
+:host, .eoc-page, .eoc-screen, .eoc-overlay {
   --cream: #F6EBD3;
   --tomato: #C8402A;
   --teal: #1F6F6B;
@@ -18,6 +18,7 @@
   line-height: 1.4;
 }
 *, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 /* ---------- layout ---------- */
 .eoc-screen { position: fixed; inset: 0; pointer-events: none; }

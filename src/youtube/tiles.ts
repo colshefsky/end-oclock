@@ -62,3 +62,10 @@ export function applyTiles(root: ParentNode, timeLeftMs: number, lengths: Map<st
     if (el.getAttribute('data-eoc-tile') !== v) el.setAttribute('data-eoc-tile', v);
   }
 }
+
+/** Search/home filter chips can only be told apart by their text: hide the "Shorts" one. */
+export function hideShortsChips(root: ParentNode): void {
+  for (const chip of root.querySelectorAll<HTMLElement>(SEL.chip)) {
+    if (!chip.hidden && chip.textContent?.trim() === 'Shorts') chip.hidden = true;
+  }
+}

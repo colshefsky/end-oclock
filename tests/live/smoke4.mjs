@@ -1,0 +1,37 @@
+import { launch } from './launch.mjs';
+const shots = process.argv[3];
+const { browser, ctx, storage } = await launch(process.argv[2] ?? 'chrome');
+const page = await ctx.newPage();
+page.on('console', (m) => { if (m.type() === 'error' || m.text().includes('eoc')) console.log('console:', m.type(), m.text().slice(0, 200)); });
+page.on('pageerror', (e) => console.log('pageerror:', e.message));
+await page.goto('https://www.youtube.com/', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(2500);
+await page.evaluate(() => {
+  const r = document.querySelector('eoc-root').shadowRoot;
+  const c = r.querySelector('input[type="number"]'); c.value = '20'; c.dispatchEvent(new Event('input'));
+  r.querySelector('.eoc-btn--primary').click();
+});
+await page.waitForTimeout(1000);
+await page.goto('https://www.youtube.com/watch?v=UYhKDweME3A', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(8000);
+const probe = () => page.evaluate(() => {
+  const v = document.querySelector('#movie_player video');
+  return { paused: v?.paused, t: v?.currentTime?.toFixed(1), pill: !!document.querySelector('eoc-root')?.shadowRoot?.querySelector('.eoc-pill') };
+});
+console.log('before:', JSON.stringify(await probe()));
+await page.click('#movie_player video');
+await page.waitForTimeout(3000);
+console.log('after click:', JSON.stringify(await probe()));
+const s = (await storage()).session;
+console.log('session:', JSON.stringify({ clockPausedSince: s.clockPausedSince, committed: s.committed }));
+await page.bringToFront();
+await page.click('#movie_player video');
+await page.waitForTimeout(3000);
+const s2 = (await storage()).session;
+console.log('resumed:', JSON.stringify({ clockPausedSince: s2.clockPausedSince, pausedMs: s2.pausedMs }));
+await page.bringToFront();
+await page.click('.ytp-fullscreen-button');
+await page.waitForTimeout(2000);
+console.log('fullscreen:', await page.evaluate(() => !!document.fullscreenElement));
+await page.screenshot({ path: `${shots}/c1-fullscreen.png` });
+await browser.close();

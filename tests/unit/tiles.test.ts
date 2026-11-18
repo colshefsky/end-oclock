@@ -1,4 +1,4 @@
-import { readTile, verdict, applyTiles } from '../../src/youtube/tiles';
+import { readTile, verdict, applyTiles, hideShortsChips } from '../../src/youtube/tiles';
 
 const MIN = 60_000;
 
@@ -93,4 +93,13 @@ test('verdict rules', () => {
   expect(verdict({ videoId: 'x', kind: 'video', seconds: 600 }, 10 * MIN)).toBe('show');
   expect(verdict({ videoId: 'x', kind: 'video', seconds: 601 }, 10 * MIN)).toBe('hide');
   expect(verdict({ videoId: null, kind: 'collection', seconds: null }, 0)).toBe('show');
+});
+
+test('hides the Shorts filter chip by its text', () => {
+  const root = mount(`
+    <yt-chip-cloud-chip-renderer><div>All</div></yt-chip-cloud-chip-renderer>
+    <yt-chip-cloud-chip-renderer><div> Shorts </div></yt-chip-cloud-chip-renderer>
+    <chip-view-model><button><div>Shorts</div></button></chip-view-model>`);
+  hideShortsChips(root);
+  expect([...root.children].map((c) => (c as HTMLElement).hidden)).toEqual([false, true, true]);
 });

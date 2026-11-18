@@ -126,3 +126,17 @@ test('shorts URLs are sent home', async () => {
   expect(navigate).toHaveBeenCalledWith('https://www.youtube.com/');
   o.stop();
 });
+
+test('concurrent writes from one tab never overwrite each other', async () => {
+  await sessionItem.setValue(running());
+  const { o } = make();
+  await o.start();
+  await Promise.all([
+    o.mutate((s) => ({ ...s, intention: 'a' })),
+    o.mutate((s) => ({ ...s, pausedMs: 5 })),
+  ]);
+  const s = await sessionItem.getValue();
+  expect(s?.intention).toBe('a');
+  expect(s?.pausedMs).toBe(5);
+  o.stop();
+});

@@ -61,18 +61,32 @@ test('resuming partway counts only what is left', () => {
 });
 
 test('ignores ad playback', () => {
+  vi.useFakeTimers();
   const { player, state } = page('d');
   player.classList.add('ad-showing');
   state.duration = 15;
   const { m, deps } = monitor();
   m.tick();
-  m.handleDetails({ videoId: 'd', lengthSeconds: 2880, isLive: false });
+  vi.advanceTimersByTime(5000);
   m.tick();
+  // The ad's own 15 s length is never used to decide.
   expect(deps.onCommit).not.toHaveBeenCalled();
   expect(deps.onDoesntFit).not.toHaveBeenCalled();
-  player.classList.remove('ad-showing');
+  // YouTube's data describes the real video, so we can decide during the ad.
+  m.handleDetails({ videoId: 'd', lengthSeconds: 2880, isLive: false });
   m.tick();
   expect(deps.onDoesntFit).toHaveBeenCalledWith({ videoId: 'd', seconds: 2880 });
+  vi.useRealTimers();
+});
+
+test('during an ad, remaining time ignores the ad position', () => {
+  const { player, state } = page('d2');
+  player.classList.add('ad-showing');
+  state.currentTime = 12;
+  const { m, deps } = monitor();
+  m.handleDetails({ videoId: 'd2', lengthSeconds: 600, isLive: false });
+  m.tick();
+  expect(deps.onCommit).toHaveBeenCalledWith({ videoId: 'd2', live: false, remainingMs: 600_000 });
 });
 
 test('live streams are committed as live', () => {
