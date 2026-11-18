@@ -106,3 +106,25 @@ describe('options page', () => {
     expect(root.querySelector('.eoc-hold')).not.toBeNull();
   });
 });
+
+describe('first-run welcome', () => {
+  beforeEach(() => fakeBrowser.reset());
+
+  test('first run greets the person and explains the three steps', async () => {
+    const root = document.createElement('div');
+    await initOptions(root);
+    expect(root.textContent).toContain("Welcome to End O'Clock");
+    expect(root.querySelectorAll('.eoc-welcome-step')).toHaveLength(3);
+    expect(root.querySelector('[data-action="save"]')!.textContent).toBe('Save and start');
+    expect(root.querySelector('[data-action="lock"]')).toBeNull();
+  });
+
+  test('after setup, unlocking shows the normal settings form', async () => {
+    await firstRunDoneItem.setValue(true);
+    const root = document.createElement('div');
+    const page = await initOptions(root);
+    await page.unlock();
+    expect(root.textContent).toContain('Your rules');
+    expect(root.textContent).not.toContain('Welcome');
+  });
+});

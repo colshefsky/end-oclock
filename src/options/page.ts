@@ -71,7 +71,7 @@ function renderHold(onUnlock: () => void): { el: HTMLElement; dispose: () => voi
   return { el, dispose };
 }
 
-function renderForm(initial: Settings, onSave: (s: Settings) => void, onLock: () => void): HTMLElement {
+function renderForm(initial: Settings, onSave: (s: Settings) => void, onLock: () => void, welcome = false): HTMLElement {
   let draft = { ...initial };
   const rows: HTMLElement[] = [];
   const steppers: Array<{ key: 'usualMinutes' | 'maxMinutes' | 'cooldownMinutes'; label: string; help: string; step: number }> = [
@@ -109,23 +109,40 @@ function renderForm(initial: Settings, onSave: (s: Settings) => void, onLock: ()
       h('div', {}, h('div', { class: 'eoc-setting-label' }, label), h('div', { class: 'eoc-setting-help' }, help)), sw));
   }
   const lock = h('button', { type: 'button', class: 'eoc-btn', 'data-action': 'lock' }, t('lockNoSave'));
-  const save = h('button', { type: 'button', class: 'eoc-btn eoc-btn--primary', 'data-action': 'save', style: 'font-size:18px;padding:12px 24px' }, t('saveLock'));
+  const save = h('button', { type: 'button', class: 'eoc-btn eoc-btn--primary', 'data-action': 'save', style: 'font-size:18px;padding:12px 24px' },
+    welcome ? t('welcomeSave') : t('saveLock'));
   lock.addEventListener('click', onLock);
   save.addEventListener('click', () => onSave(clampSettings(draft)));
   paint();
-  return h('main', { class: 'eoc-settings' },
-    h('aside', { class: 'eoc-side' },
-      h('div', { class: 'eoc-bubble' }, t('settingsBubble')),
-      h('img', { class: 'eoc-mascot', src: mascotUrl('skeptical'), alt: '', width: '220', height: '220' })),
-    h('section', { class: 'eoc-card', style: '--card-shadow:#1F6F6B;background:#FFFDF6;width:min(760px,100%)' },
-      h('div', { class: 'eoc-row', style: 'justify-content:space-between;align-items:flex-end' },
+  const header = welcome
+    ? h('div', { class: 'eoc-stack', style: 'gap:12px' },
+        h('div', { class: 'eoc-stack', style: 'gap:2px' },
+          h('div', { class: 'eoc-eyebrow' }, t('welcomeEyebrow')),
+          h('h1', { class: 'eoc-h1', style: 'font-size:40px' }, t('welcomeTitle'))),
+        h('div', { class: 'eoc-welcome-steps' },
+          ...[1, 2, 3].map((n) => h('div', { class: 'eoc-welcome-step' },
+            h('div', { class: 'eoc-welcome-num' }, String(n)), h('div', {}, t(`welcomeStep${n}`))))),
+        h('p', { class: 'eoc-small', style: 'margin:0;font-size:17px' }, t('welcomeRules')))
+    : h('div', { class: 'eoc-row', style: 'justify-content:space-between;align-items:flex-end' },
         h('div', { class: 'eoc-stack', style: 'gap:2px' },
           h('div', { class: 'eoc-eyebrow' }, t('settingsUnlocked')),
           h('h1', { class: 'eoc-h1', style: 'font-size:40px' }, t('settingsTitle'))),
-        h('div', { class: 'eoc-badge' }, t('settingsBadge'))),
+        h('div', { class: 'eoc-badge' }, t('settingsBadge')));
+  const footer = welcome
+    ? h('div', { class: 'eoc-row', style: 'justify-content:space-between' },
+        h('div', { class: 'eoc-pin' }, h('img', { src: '/icon/16.png', alt: '', width: '16', height: '16' }),
+          h('span', {}, h('span', { class: 'eoc-strong' }, t('welcomePinLabel')), ' ', t('welcomePin'))),
+        save)
+    : h('div', { class: 'eoc-row', style: 'justify-content:flex-end' }, lock, save);
+  return h('main', { class: 'eoc-settings' },
+    h('aside', { class: 'eoc-side' },
+      h('div', { class: 'eoc-bubble' }, welcome ? t('welcomeBubble') : t('settingsBubble')),
+      h('img', { class: 'eoc-mascot', src: mascotUrl(welcome ? 'wave' : 'skeptical'), alt: '', width: '240', height: '240' })),
+    h('section', { class: 'eoc-card', style: `--card-shadow:${welcome ? '#C8402A' : '#1F6F6B'};background:#FFFDF6;width:min(760px,100%)` },
+      header,
       ...rows,
       h('div', { class: 'eoc-always' }, h('div', { class: 'eoc-strong' }, t('alwaysOn')), h('div', {}, t('alwaysOnText'))),
-      h('div', { class: 'eoc-row', style: 'justify-content:flex-end' }, lock, save)));
+      footer));
 }
 
 /** Mounts the settings page into `root`: the hold screen, or the form on first run / after unlocking. */
@@ -139,11 +156,12 @@ export async function initOptions(root: HTMLElement) {
   const showForm = async () => {
     disposeHold();
     const current = await settingsItem.getValue();
+    const welcome = !(await firstRunDoneItem.getValue());
     root.replaceChildren(renderForm(current, async (s) => {
       await settingsItem.setValue(s);
       await firstRunDoneItem.setValue(true);
       showHold();
-    }, () => showHold()));
+    }, () => showHold(), welcome));
   };
   // Leaving the page relocks it.
   document.addEventListener('visibilitychange', () => {

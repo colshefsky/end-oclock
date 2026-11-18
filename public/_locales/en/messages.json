@@ -123,7 +123,7 @@
     "message": "Live streams wrap up at $1."
   },
   "saveLater": {
-    "message": "Save to Watch Later"
+    "message": "Copy link for later"
   },
   "saveLaterCopied": {
     "message": "Link copied. Paste it somewhere for later."
@@ -241,5 +241,59 @@
   },
   "unitHrMin": {
     "message": "$1 hr $2"
+  },
+  "popupIdleTitle": {
+    "message": "Ready when you are"
+  },
+  "popupIdleText": {
+    "message": "Open YouTube and pick when you want to be done."
+  },
+  "popupActiveText": {
+    "message": "Everything you see fits. No rush."
+  },
+  "popupCooldownTitle": {
+    "message": "Napping until $1"
+  },
+  "popupCooldownText": {
+    "message": "YouTube opens back up after your break."
+  },
+  "popupEndedTitle": {
+    "message": "That's a wrap!"
+  },
+  "popupEndedText": {
+    "message": "Nice stop. Your break starts now."
+  },
+  "popupSettings": {
+    "message": "Settings (hold for a minute)"
+  },
+  "welcomeEyebrow": {
+    "message": "You're all set up"
+  },
+  "welcomeTitle": {
+    "message": "Welcome to End O'Clock"
+  },
+  "welcomeBubble": {
+    "message": "Hi! I'm here to help you stop on purpose."
+  },
+  "welcomeStep1": {
+    "message": "Every time you open YouTube, pick when you want to be done."
+  },
+  "welcomeStep2": {
+    "message": "You only see videos that fit. No Shorts, no autoplay."
+  },
+  "welcomeStep3": {
+    "message": "When it's time, you finish your video and it wraps up."
+  },
+  "welcomeRules": {
+    "message": "Set your rules now. You won't need to hold anything this first time. After today, changing them takes a 60-second hold."
+  },
+  "welcomePinLabel": {
+    "message": "Pin me:"
+  },
+  "welcomePin": {
+    "message": "click the puzzle piece in your toolbar, then the pin next to End O'Clock."
+  },
+  "welcomeSave": {
+    "message": "Save and start"
   }
 }

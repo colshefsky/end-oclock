@@ -1,0 +1,7 @@
+body.eoc-page { margin: 0; width: 340px; background: var(--cream); }
+.eoc-popup { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.eoc-popup-status {
+  display: flex; align-items: center; gap: 12px; background: var(--paper);
+  border: 3px solid var(--ink); border-radius: 16px; padding: 12px;
+}
+.eoc-popup-status img { object-fit: contain; flex-shrink: 0; animation: eoc-enter .6s var(--spring-soft) both; }
