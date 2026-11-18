@@ -1,0 +1,73 @@
+body.eoc-page {
+  margin: 0; min-height: 100vh; background-color: var(--cream);
+  background-image: radial-gradient(rgba(35, 32, 28, .12) 1.4px, transparent 1.6px); background-size: 14px 14px;
+}
+#app { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 16px; box-sizing: border-box; }
+
+/* Hold screen */
+.eoc-hold { display: flex; align-items: center; justify-content: center; gap: 72px; flex-wrap: wrap; }
+.eoc-hold-copy { width: min(460px, 100%); }
+.eoc-hold-copy .eoc-h1 { font-size: 48px; }
+.eoc-hold-copy .eoc-bubble { animation-delay: .3s; }
+.eoc-hold-wrap { position: relative; width: 340px; height: 340px; }
+.eoc-hold-ring { position: absolute; inset: 0; width: 340px; height: 340px; }
+.eoc-hold-ring circle:last-child { transition: stroke-dashoffset .1s linear; }
+.eoc-hold-button {
+  position: absolute; left: 50px; top: 44px; width: 240px; height: 240px; border-radius: 50%;
+  border: 4px solid var(--ink); background: var(--mustard); color: var(--ink); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  font-family: var(--body); user-select: none; -webkit-user-select: none; touch-action: none;
+  box-shadow: 0 14px 0 0 #B8861F, 0 14px 0 4px var(--ink);
+  transition: transform .09s ease-out, box-shadow .09s ease-out, background .09s;
+}
+.eoc-hold-button:hover { transform: translateY(-2px); box-shadow: 0 16px 0 0 #B8861F, 0 16px 0 4px var(--ink); }
+.eoc-hold-button:active, .eoc-hold-button.is-held {
+  transform: translateY(11px); box-shadow: 0 3px 0 0 #B8861F, 0 3px 0 4px var(--ink); background: #DDA52C;
+}
+.eoc-hold-button.is-held { animation: eoc-strain .25s linear infinite; }
+.eoc-hold-button:focus-visible { outline: 4px solid var(--teal); outline-offset: 20px; }
+.eoc-hold-time { font-family: var(--display); font-size: 64px; line-height: 1; }
+.eoc-hold-label { font-size: 18px; font-weight: 600; }
+.eoc-hold-count { font-size: 17px; font-weight: 500; }
+@keyframes eoc-strain {
+  0%, 100% { transform: translateY(11px) rotate(0); }
+  25% { transform: translate(-1px, 12px) rotate(-1.2deg); }
+  75% { transform: translate(1px, 10px) rotate(1.2deg); }
+}
+
+/* Settings form */
+.eoc-settings { display: flex; align-items: flex-start; justify-content: center; gap: 40px; }
+.eoc-settings .eoc-side { width: 240px; padding-top: 30px; }
+.eoc-settings .eoc-card { gap: 6px; padding: 32px 40px; }
+.eoc-badge { font-size: 15px; font-weight: 600; background: var(--mustard); border: 2px solid var(--ink); border-radius: 999px; padding: 6px 12px; }
+.eoc-setting { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 2px dashed rgba(35, 32, 28, .25); }
+.eoc-setting-label { font-size: 20px; font-weight: 600; }
+.eoc-setting-help { font-size: 15px; color: var(--muted); }
+.eoc-step {
+  width: 44px; height: 44px; border-radius: 12px; border: 3px solid var(--ink); background: var(--cream); color: var(--ink);
+  font-family: var(--body); font-size: 24px; font-weight: 700; box-shadow: 3px 3px 0 var(--ink); cursor: pointer;
+  transition: transform .12s ease;
+}
+.eoc-step:hover { transform: translate(-2px, -2px); }
+.eoc-step:active { transform: translate(3px, 3px); }
+.eoc-stepper-value { min-width: 96px; text-align: center; font-family: var(--display); font-size: 22px; }
+.eoc-switch {
+  position: relative; flex-shrink: 0; width: 72px; height: 40px; border-radius: 999px; border: 3px solid var(--ink);
+  cursor: pointer; padding: 0; box-shadow: 3px 3px 0 var(--ink); background: #D9CFBA;
+}
+.eoc-switch[aria-checked="true"] { background: var(--teal); }
+.eoc-knob {
+  position: absolute; top: 4px; left: 4px; width: 26px; height: 26px; border-radius: 50%; border: 3px solid var(--ink);
+  background: var(--paper); box-sizing: border-box; transition: transform .25s cubic-bezier(.2, .9, .3, 1.4);
+}
+.eoc-switch[aria-checked="true"] .eoc-knob { transform: translateX(32px); }
+.eoc-switch:focus-visible, .eoc-step:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+.eoc-always { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; background: var(--cream); border: 2px solid var(--ink); border-radius: 16px; padding: 12px 16px; font-size: 15px; }
+@media (max-width: 760px) {
+  .eoc-hold { gap: 32px; }
+  .eoc-settings .eoc-side { display: none; }
+  .eoc-setting { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .eoc-hold-button.is-held { animation: none; }
+}

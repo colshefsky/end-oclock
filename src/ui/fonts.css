@@ -1,0 +1,6 @@
+/* Fonts for the extension's own pages (popup, options). Bundled, never fetched from Google. */
+@font-face { font-family: 'EOC Bowlby'; src: url('/fonts/bowlby-one-400.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'EOC Fredoka'; src: url('/fonts/fredoka-400.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'EOC Fredoka'; src: url('/fonts/fredoka-500.woff2') format('woff2'); font-weight: 500; font-display: swap; }
+@font-face { font-family: 'EOC Fredoka'; src: url('/fonts/fredoka-600.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'EOC Fredoka'; src: url('/fonts/fredoka-700.woff2') format('woff2'); font-weight: 700; font-display: swap; }
