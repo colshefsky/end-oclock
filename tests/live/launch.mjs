@@ -14,7 +14,7 @@ const browsers = {
   ardia: '/Applications/Ardia.app/Contents/MacOS/Ardia',
 };
 
-export async function launch(name = 'chrome', port = 9333) {
+export async function launch(name = 'chrome', port = 9333, { before } = {}) {
   const profile = mkdtempSync(join(tmpdir(), 'eoc-live-'));
   const viaFlag = name === 'vivaldi'; // not Google-branded: still honors --load-extension
   const proc = spawn(browsers[name], [
@@ -28,6 +28,7 @@ export async function launch(name = 'chrome', port = 9333) {
     browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`).catch(() => undefined);
   }
   if (!browser) throw new Error('could not connect');
+  if (before) await before(browser.contexts()[0]);
   const cdp = await browser.newBrowserCDPSession();
   let extId;
   if (viaFlag) {

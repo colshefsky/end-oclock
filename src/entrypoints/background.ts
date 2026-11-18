@@ -1,10 +1,8 @@
-import { handleEndAlarm, scheduleEnd, END_ALARM } from '../background/logic';
+import { handleEndAlarm, scheduleEnd, END_ALARM, onInstalledReason } from '../background/logic';
 import { sessionItem } from '../shared/storage';
 
 export default defineBackground(() => {
-  browser.runtime.onInstalled.addListener(({ reason }) => {
-    if (reason === 'install') void browser.runtime.openOptionsPage();
-  });
+  browser.runtime.onInstalled.addListener(({ reason }) => void onInstalledReason(reason));
 
   browser.runtime.onMessage.addListener((msg: unknown, sender) => {
     if ((msg as { type?: string } | null)?.type === 'closeTab' && sender.tab?.id != null) {

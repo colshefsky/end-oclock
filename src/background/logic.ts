@@ -23,3 +23,19 @@ export async function handleEndAlarm(now: number): Promise<void> {
   }
   await sessionItem.setValue(endSession(s, 'no-tabs', now, effectiveEnd(s, now)));
 }
+
+/**
+ * Pages only get an extension's scripts when they load, so YouTube tabs that were already open when
+ * End O'Clock was installed or updated would run without it. Reload them so they land on the start screen.
+ */
+export async function reloadYouTubeTabs(): Promise<void> {
+  const tabs = await browser.tabs.query({ url: 'https://www.youtube.com/*' });
+  await Promise.all(tabs.map((t) => (t.id != null ? browser.tabs.reload(t.id).catch(() => {}) : undefined)));
+}
+
+export async function onInstalledReason(reason: string): Promise<void> {
+  if (reason === 'install') {
+    try { await browser.runtime.openOptionsPage(); } catch { /* the welcome page is a nicety; never block the reload */ }
+  }
+  if (reason === 'install' || reason === 'update') await reloadYouTubeTabs();
+}

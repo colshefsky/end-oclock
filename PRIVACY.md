@@ -14,5 +14,6 @@ End O'Clock collects **nothing**.
 | Access to youtube.com | To show the start screen, hide what doesn't fit, and end sessions. |
 | `storage` | To remember your settings and the current session on this computer. |
 | `alarms` | To end a session on time even if you closed every YouTube tab. |
+| Finding open YouTube tabs | When End O'Clock is installed or updated, YouTube tabs that were already open reload so it takes effect right away. |
 
 Uninstalling the extension deletes everything it stored.

@@ -51,7 +51,7 @@ Yes. End O'Clock is open source, so anyone can read every line of it here. It do
 
 ### Updating
 
-When there's a new version: download the zip again, replace the files in your **end-oclock** folder with the new ones, then press the ↻ reload arrow on End O'Clock's card on the extensions page.
+When there's a new version: download the zip again, replace the files in your **end-oclock** folder with the new ones, then press the ↻ reload arrow on End O'Clock's card on the extensions page. Any YouTube tabs you have open refresh themselves so the new version takes over right away.
 
 ### Good to know
 

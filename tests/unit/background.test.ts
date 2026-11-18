@@ -1,5 +1,5 @@
 import { fakeBrowser } from 'wxt/testing/fake-browser';
-import { handleEndAlarm, scheduleEnd, END_ALARM } from '../../src/background/logic';
+import { handleEndAlarm, scheduleEnd, END_ALARM, onInstalledReason } from '../../src/background/logic';
 import { sessionItem } from '../../src/shared/storage';
 import { DEFAULT_SETTINGS } from '../../src/core/settings';
 import { startSession } from '../../src/core/session';
@@ -40,4 +40,28 @@ test('scheduleEnd sets an alarm just after the end, and clears it when ended', a
   expect(alarm?.scheduledTime).toBe(T0 + 30 * MIN + 1000);
   await scheduleEnd({ ...s, endedAt: T0 + MIN }, T0 + MIN);
   expect(await fakeBrowser.alarms.get(END_ALARM)).toBeUndefined();
+});
+
+describe('open YouTube tabs pick up the extension', () => {
+  test('install and update reload every open youtube.com tab, and only those', async () => {
+    const yt1 = await fakeBrowser.tabs.create({ url: 'https://www.youtube.com/watch?v=a' });
+    const yt2 = await fakeBrowser.tabs.create({ url: 'https://www.youtube.com/' });
+    await fakeBrowser.tabs.create({ url: 'https://mail.google.com/' });
+    const reload = vi.spyOn(fakeBrowser.tabs, 'reload').mockResolvedValue(undefined as never);
+    vi.spyOn(fakeBrowser.tabs, 'query').mockImplementation((async (q: { url?: string | string[] }) => {
+      const all = [yt1, yt2, { id: 99, url: 'https://mail.google.com/' }];
+      return all.filter((t) => String(q.url ?? '').includes('youtube.com') && t.url?.startsWith('https://www.youtube.com/'));
+    }) as never);
+    await onInstalledReason('update');
+    expect(reload.mock.calls.map((c) => c[0]).sort()).toEqual([yt1.id, yt2.id].sort());
+    reload.mockClear();
+    await onInstalledReason('install');
+    expect(reload).toHaveBeenCalledTimes(2);
+  });
+
+  test('a browser update does not reload tabs', async () => {
+    const reload = vi.spyOn(fakeBrowser.tabs, 'reload').mockResolvedValue(undefined as never);
+    await onInstalledReason('chrome_update');
+    expect(reload).not.toHaveBeenCalled();
+  });
 });

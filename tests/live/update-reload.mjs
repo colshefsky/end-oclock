@@ -1,0 +1,14 @@
+import { launch } from './launch.mjs';
+const { browser, ctx, extId, cdp } = await launch('chrome', 9668);
+await new Promise((r) => setTimeout(r, 2500));
+const page = await ctx.newPage();
+await page.goto('https://www.youtube.com/', { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(3000);
+const state = () => page.evaluate(() => ({ marker: !!window.__eocMarker, off: document.documentElement.hasAttribute('data-eoc-off'), screen: document.querySelector('eoc-root')?.shadowRoot?.querySelector('.eoc-screen')?.textContent?.slice(0, 30) ?? null }));
+await page.evaluate(() => { window.__eocMarker = true; });
+console.log('before update:', JSON.stringify(await state()));
+const again = await cdp.send('Extensions.loadUnpacked', { path: process.env.EOC_EXT ?? decodeURIComponent(new URL('../../.output/chrome-mv3', import.meta.url).pathname) });
+console.log('reloaded id', again.id === extId);
+await page.waitForTimeout(7000);
+console.log('after update:', JSON.stringify(await state()));
+await browser.close();
