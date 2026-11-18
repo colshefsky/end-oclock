@@ -49,6 +49,8 @@
 }
 .eoc-card--wide { width: min(800px, 100%); flex-direction: row; align-items: center; gap: 32px; }
 .eoc-card--wide .eoc-h1:not(.eoc-h1--stamp) { font-size: 40px; }
+.eoc-card--wide .eoc-h1--stamp { font-size: 50px; white-space: nowrap; }
+.eoc-card--wide > .eoc-mascot { width: 190px; height: auto; }
 .eoc-eyebrow { font-size: 14px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--teal); }
 .eoc-h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 44px; line-height: 1.05; }
 .eoc-h1--stamp { color: var(--tomato); text-shadow: 4px 4px 0 var(--ink); font-size: 56px; animation: eoc-stamp .7s .35s var(--spring) both; }

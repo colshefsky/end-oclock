@@ -1,0 +1,28 @@
+name: Something's not working
+description: Tell us what went wrong
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead? Screenshots help a lot.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Chrome 157, Edge, Brave…
+    validations:
+      required: true
+  - type: input
+    id: page
+    attributes:
+      label: Which YouTube page?
+      placeholder: home, search, a video, a channel…
+  - type: input
+    id: version
+    attributes:
+      label: End O'Clock version
+      description: Shown on your browser's extensions page.

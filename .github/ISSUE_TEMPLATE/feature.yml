@@ -1,0 +1,11 @@
+name: Idea
+description: Suggest something
+labels: [idea]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like End O'Clock to do?
+      description: And what would it help with? (Visual ideas get a mockup before anyone builds them.)
+    validations:
+      required: true
