@@ -1,0 +1,60 @@
+/*
+ * CSS-first hiding: injected through the manifest, so it applies before YouTube paints.
+ * Shorts selectors adapted from gijsdev/ublock-hide-yt-shorts (MIT).
+ */
+
+/* Until our script decides (gate, end, cooldown), YouTube stays hidden. */
+html:not([data-eoc-session]):not([data-eoc-off]) ytd-app {
+  visibility: hidden !important;
+}
+html:not([data-eoc-session]):not([data-eoc-off]) body {
+  overflow: hidden !important;
+}
+
+/* Shorts, everywhere, always. */
+html:not([data-eoc-off]) :is(
+  ytd-reel-shelf-renderer,
+  ytd-rich-shelf-renderer[is-shorts],
+  ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+  ytd-rich-section-renderer:has(ytm-shorts-lockup-view-model, ytm-shorts-lockup-view-model-v2),
+  grid-shelf-view-model:has(ytm-shorts-lockup-view-model, ytm-shorts-lockup-view-model-v2),
+  ytm-shorts-lockup-view-model,
+  ytm-shorts-lockup-view-model-v2,
+  ytd-guide-entry-renderer:has(a[title="Shorts"]),
+  ytd-mini-guide-entry-renderer[aria-label="Shorts"],
+  ytd-mini-guide-entry-renderer:has(a[title="Shorts"]),
+  yt-tab-shape[tab-title="Shorts"],
+  ytd-video-renderer:has(a[href^="/shorts/"]),
+  ytd-rich-item-renderer:has(a[href^="/shorts/"]),
+  ytd-reel-item-renderer
+) {
+  display: none !important;
+}
+
+/* No autoplay, no end-screen suggestions. */
+html:not([data-eoc-off]) :is(
+  .html5-endscreen,
+  .ytp-endscreen-content,
+  .ytp-ce-element,
+  .ytp-autonav-endscreen-countdown-overlay,
+  .ytp-autonav-endscreen-upnext-container,
+  .ytp-autonav-toggle-button-container,
+  button[data-tooltip-target-id="ytp-autonav-toggle-button"]
+) {
+  display: none !important;
+}
+
+/* During a session: a tile shows only once we've checked it fits (outermost tiles only). */
+html[data-eoc-session]:not([data-eoc-off]) :is(
+  ytd-rich-item-renderer, yt-lockup-view-model, ytd-video-renderer, ytd-compact-video-renderer,
+  ytd-grid-video-renderer, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer,
+  ytd-radio-renderer, ytd-compact-radio-renderer, ytd-playlist-renderer, ytd-compact-playlist-renderer,
+  ytd-grid-playlist-renderer
+):not([data-eoc-tile="show"]):not(:is(
+  ytd-rich-item-renderer, yt-lockup-view-model, ytd-video-renderer, ytd-compact-video-renderer,
+  ytd-grid-video-renderer, ytd-playlist-video-renderer, ytd-playlist-panel-video-renderer,
+  ytd-radio-renderer, ytd-compact-radio-renderer, ytd-playlist-renderer, ytd-compact-playlist-renderer,
+  ytd-grid-playlist-renderer
+) *) {
+  display: none !important;
+}
