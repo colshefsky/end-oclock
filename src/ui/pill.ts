@@ -11,10 +11,7 @@ export function mountPill(o: { endAt: number; onDone(): void }): void {
     label = h('span', {});
     const done = h('button', { type: 'button', class: 'eoc-btn eoc-btn--small' }, t('pillDone'));
     done.addEventListener('click', () => o.onDone());
-    pill = h('div', { class: 'eoc-pill', role: 'status' },
-      h('svg-slot', {}),
-      label, done);
-    pill.querySelector('svg-slot')!.replaceWith(clockIcon());
+    pill = h('div', { class: 'eoc-pill', role: 'status' }, clockIcon(), label, done);
     overlayLayer().append(pill);
   }
   label!.textContent = t('pillDoneBy', formatClock(o.endAt));
