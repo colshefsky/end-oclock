@@ -255,6 +255,13 @@ export function createOrchestrator(deps: OrchestratorDeps) {
   }
 
   async function start(): Promise<void> {
+    // Listen right away: YouTube's inline page data arrives while we're still reading storage.
+    cleanups.push(onBridge((msg) => {
+      if (msg.kind === 'lengths') {
+        for (const [id, secs] of msg.entries) lengths.set(id, secs);
+        refreshTiles();
+      } else monitor.handleDetails(msg.details);
+    }));
     onContextLost(() => {
       stop();
       clearScreen();
@@ -268,12 +275,6 @@ export function createOrchestrator(deps: OrchestratorDeps) {
 
     cleanups.push(sessionItem.watch((v) => { session = v; render(); }));
     cleanups.push(settingsItem.watch((v) => { settings = v ?? DEFAULT_SETTINGS; }));
-    cleanups.push(onBridge((msg) => {
-      if (msg.kind === 'lengths') {
-        for (const [id, secs] of msg.entries) lengths.set(id, secs);
-        refreshTiles();
-      } else monitor.handleDetails(msg.details);
-    }));
 
     const observer = new MutationObserver(() => refreshTiles());
     observer.observe(document.documentElement, { childList: true, subtree: true });

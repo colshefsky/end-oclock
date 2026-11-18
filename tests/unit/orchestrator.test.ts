@@ -140,3 +140,15 @@ test('concurrent writes from one tab never overwrite each other', async () => {
   expect(s?.pausedMs).toBe(5);
   o.stop();
 });
+
+test('data YouTube sends while we are still starting up is not lost', async () => {
+  await sessionItem.setValue(running());
+  document.body.innerHTML = '<ytd-rich-item-renderer id="t"><yt-lockup-view-model><a href="/watch?v=early">x</a></yt-lockup-view-model></ytd-rich-item-renderer>';
+  const { o } = make();
+  const starting = o.start();
+  window.dispatchEvent(new MessageEvent('message', { data: { src: 'eoc', kind: 'lengths', entries: [['early', 120]] }, source: window }));
+  await starting;
+  await o.tick();
+  expect(document.getElementById('t')!.getAttribute('data-eoc-tile')).toBe('show');
+  o.stop();
+});
