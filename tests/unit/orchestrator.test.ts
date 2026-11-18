@@ -152,3 +152,108 @@ test('data YouTube sends while we are still starting up is not lost', async () =
   expect(document.getElementById('t')!.getAttribute('data-eoc-tile')).toBe('show');
   o.stop();
 });
+
+describe('review fixes', () => {
+  function watchPage(videoId: string) {
+    history.replaceState(null, '', `/watch?v=${videoId}`);
+    document.body.innerHTML = '<div id="movie_player"><video class="html5-main-video"></video></div>';
+    const v = document.querySelector('video')!;
+    const st = { duration: 600, currentTime: 0, paused: false, ended: false };
+    for (const k of ['duration', 'paused', 'ended'] as const) Object.defineProperty(v, k, { configurable: true, get: () => st[k] });
+    Object.defineProperty(v, 'currentTime', { configurable: true, get: () => st.currentTime });
+    return { st, player: document.getElementById('movie_player')! };
+  }
+  const details = (videoId: string, lengthSeconds: number) =>
+    window.dispatchEvent(new MessageEvent('message', { data: { src: 'eoc', kind: 'watch', details: { videoId, lengthSeconds, isLive: false } }, source: window }));
+
+  test('a watch entry erased by another tab is written back by the next heartbeat', async () => {
+    await sessionItem.setValue(running());
+    watchPage('w1');
+    const { o } = make('tab-a');
+    await o.start();
+    details('w1', 600);
+    await o.tick();
+    await flush();
+    expect(Object.keys((await sessionItem.getValue())!.committed)).toEqual(['tab-a']);
+    const s = (await sessionItem.getValue())!;
+    await sessionItem.setValue({ ...s, committed: {} }); // another tab's stale write
+    clock += 3000;
+    await o.tick();
+    await flush();
+    expect((await sessionItem.getValue())!.committed['tab-a']?.videoId).toBe('w1');
+    o.stop();
+  });
+
+  test("an ended session can't be undone by another tab's stale write", async () => {
+    await sessionItem.setValue(running());
+    const { o } = make('tab-a');
+    await o.start();
+    const stale = (await sessionItem.getValue())!;
+    getHost().querySelector<HTMLButtonElement>('.eoc-pill button')!.click();
+    await flush(); await flush();
+    expect((await sessionItem.getValue())!.endedAt).not.toBeNull();
+    await sessionItem.setValue({ ...stale, intention: 'other tab' });
+    await flush(); await flush();
+    expect((await sessionItem.getValue())!.endedAt).not.toBeNull();
+    o.stop();
+  });
+
+  test('waking from sleep dates the end at the real end time', async () => {
+    const s = running();
+    await sessionItem.setValue(s);
+    const { o } = make();
+    await o.start();
+    clock += 20 * MIN;
+    await o.tick();
+    clock += 5 * 60 * MIN;
+    await o.tick();
+    await flush();
+    const after = (await sessionItem.getValue())!;
+    expect(after.endReason).toBe('not-watching');
+    expect(after.endedAt).toBe(s.startedAt + 30 * MIN);
+    o.stop();
+  });
+
+  test('time running out during an ad records the real video, not the ad', async () => {
+    await sessionItem.setValue(running(10));
+    const { st, player } = watchPage('w2');
+    const { o } = make('tab-a');
+    await o.start();
+    details('w2', 540);
+    await o.tick();
+    clock += 10 * MIN;            // time is up…
+    player.classList.add('ad-showing');
+    st.duration = 15;              // …during a 15 s mid-roll
+    st.currentTime = 2;
+    await o.tick();
+    await flush();
+    expect((await sessionItem.getValue())!.committed['tab-a']?.remainingAtTimeUpMs).toBeNull();
+    player.classList.remove('ad-showing');
+    st.duration = 540;
+    st.currentTime = 300;
+    clock += 1000;
+    await o.tick();
+    await flush();
+    expect((await sessionItem.getValue())!.committed['tab-a']?.remainingAtTimeUpMs).toBe(240_000);
+    o.stop();
+  });
+
+  test('a tile changed right after a pass is re-checked without waiting for the timer', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'Date'] });
+    await sessionItem.setValue(running(20));
+    document.body.innerHTML = '<ytd-rich-item-renderer id="t"><yt-lockup-view-model><a href="/watch?v=a">a</a><yt-thumbnail-badge-view-model><div class="ytBadgeShapeText">2:00</div></yt-thumbnail-badge-view-model></yt-lockup-view-model></ytd-rich-item-renderer>';
+    const { o } = make();
+    const started = o.start();
+    await vi.runOnlyPendingTimersAsync();
+    await started;
+    expect(document.getElementById('t')!.getAttribute('data-eoc-tile')).toBe('show');
+    o.refreshTiles(true);
+    document.querySelector('a')!.setAttribute('href', '/watch?v=b');
+    document.querySelector('.ytBadgeShapeText')!.textContent = '40:00';
+    await Promise.resolve();
+    await vi.advanceTimersByTimeAsync(300);
+    expect(document.getElementById('t')!.getAttribute('data-eoc-tile')).toBe('hide');
+    o.stop();
+    vi.useRealTimers();
+  });
+});

@@ -11,6 +11,7 @@ const browsers = {
   chrome: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   vivaldi: '/Applications/Vivaldi.app/Contents/MacOS/Vivaldi',
   arc: '/Applications/Arc.app/Contents/MacOS/Arc',
+  ardia: '/Applications/Ardia.app/Contents/MacOS/Ardia',
 };
 
 export async function launch(name = 'chrome', port = 9333) {

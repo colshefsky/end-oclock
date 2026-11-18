@@ -31,6 +31,8 @@ export interface Session {
   rules: Settings;
   pausedMs: number;
   clockPausedSince: number | null;
+  /** Tab key whose paused video stopped the clock; the pause only counts while that tab is still heard from. */
+  clockPausedBy: string | null;
   committed: Record<string, Committed>;
   endedAt: number | null;
   endReason: EndReason | null;
@@ -57,6 +59,7 @@ export function startSession(input: StartInput, settings: Settings, now: number)
     rules: { ...settings },
     pausedMs: 0,
     clockPausedSince: null,
+    clockPausedBy: null,
     committed: {},
     endedAt: null,
     endReason: null,
@@ -64,13 +67,23 @@ export function startSession(input: StartInput, settings: Settings, now: number)
   };
 }
 
+/**
+ * How long the current pause has stopped the clock. It only counts while the pausing tab is still
+ * heard from: a closed or vanished tab can't freeze the clock forever.
+ */
+function currentPauseMs(s: Session, now: number): number {
+  if (s.clockPausedSince == null) return 0;
+  const pauser = s.clockPausedBy ? s.committed[s.clockPausedBy] : undefined;
+  if (!pauser) return 0;
+  const until = now - pauser.lastSeen <= HEARTBEAT_STALE_MS ? now : pauser.lastSeen;
+  return Math.max(0, until - s.clockPausedSince);
+}
+
 export function effectiveEnd(s: Session, now: number): number {
   const cap = s.startedAt + s.rules.maxMinutes * 60_000;
   if (s.mode === 'until') return Math.min(s.untilAt ?? s.startedAt, cap);
   let end = s.startedAt + (s.budgetMs ?? 0);
-  if (s.rules.pauseStopsClock) {
-    end += s.pausedMs + (s.clockPausedSince != null ? Math.max(0, now - s.clockPausedSince) : 0);
-  }
+  if (s.rules.pauseStopsClock) end += s.pausedMs + currentPauseMs(s, now);
   return Math.min(end, cap);
 }
 
@@ -80,14 +93,14 @@ export const isTimeUp = (s: Session, now: number) => now >= effectiveEnd(s, now)
 export const liveCommitted = (s: Session, now: number): Committed[] =>
   Object.values(s.committed).filter((c) => now - c.lastSeen <= HEARTBEAT_STALE_MS);
 
-/** Stops the clock (only matters in "for a while" mode with pause-stops-clock on). */
-export function pauseClock(s: Session, now: number): Session {
-  return s.clockPausedSince != null ? s : { ...s, clockPausedSince: now };
+/** Stops the clock for tab `by` (only matters in "for a while" mode with pause-stops-clock on). */
+export function pauseClock(s: Session, now: number, by: string): Session {
+  return s.clockPausedSince != null ? s : { ...s, clockPausedSince: now, clockPausedBy: by };
 }
 
 export function resumeClock(s: Session, now: number): Session {
   if (s.clockPausedSince == null) return s;
-  return { ...s, pausedMs: s.pausedMs + Math.max(0, now - s.clockPausedSince), clockPausedSince: null };
+  return { ...s, pausedMs: s.pausedMs + currentPauseMs(s, now), clockPausedSince: null, clockPausedBy: null };
 }
 
 /** Why the session should end right now, or null to keep going (spec §5.5). */
@@ -109,10 +122,22 @@ export function endCheck(s: Session, now: number): EndReason | null {
   return null;
 }
 
+const AUTOMATIC: ReadonlySet<EndReason> = new Set(['not-watching', 'nothing-fits', 'paused-after-time-up', 'safety-ceiling', 'live-end-time', 'no-tabs']);
+const GAP_MS = 5_000;
+
+/**
+ * When an automatic ending is noticed late (the laptop slept, the tab was frozen), date it at the real
+ * end so the cooldown isn't counted from wake-up. `lastActiveAt` is when this tab last ran its checks.
+ */
+export function naturalEndAt(s: Session, reason: EndReason, now: number, lastActiveAt: number): number {
+  if (!AUTOMATIC.has(reason) || now - lastActiveAt <= GAP_MS) return now;
+  return Math.min(now, Math.max(lastActiveAt, effectiveEnd(s, lastActiveAt)));
+}
+
 /** Idempotent: the first end wins. `at` lets the background date the end at the real end time. */
 export function endSession(s: Session, reason: EndReason, now: number, at: number = now): Session {
   if (s.endedAt != null) return s;
-  return { ...s, endedAt: at, endReason: reason, clockPausedSince: null, committed: {} };
+  return { ...s, endedAt: at, endReason: reason, clockPausedSince: null, clockPausedBy: null, committed: {} };
 }
 
 export const cooldownUntil = (s: Session): number | null =>

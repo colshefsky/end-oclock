@@ -55,7 +55,6 @@ if (s1.shortHref) {
   const side = await tileStats();
   console.log('sidebar:', JSON.stringify(side));
   await page.screenshot({ path: `${shots}/a4-watch.png` });
-  const session = await page.evaluate(async () => null);
   await page.evaluate(() => document.querySelector('eoc-root').shadowRoot.querySelector('.eoc-pill button').click());
   await page.waitForTimeout(2500);
   console.log('after done:', await root());

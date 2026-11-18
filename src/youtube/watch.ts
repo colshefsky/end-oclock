@@ -102,6 +102,13 @@ export function createWatchMonitor(deps: WatchDeps) {
     },
     /** The id of the video this tab committed to, if still on it. */
     committed: () => committedId,
+    /** What's left of the committed video in ms, from YouTube's data; null during an ad or when unknown. */
+    remainingMs(): number | null {
+      const v = video();
+      if (!committedId || !v || document.querySelector(`${SEL.player}${SEL.adShowing}`)) return null;
+      const len = details.get(committedId)?.lengthSeconds ?? (Number.isFinite(v.duration) ? v.duration : null);
+      return len == null ? null : Math.max(0, Math.round((len - (v.currentTime || 0)) * 1000));
+    },
     dispose(): void {
       details.clear();
     },

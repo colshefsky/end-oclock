@@ -1,7 +1,7 @@
 import { DEFAULT_SETTINGS } from '../../src/core/settings';
 import {
   startSession, effectiveEnd, timeLeftMs, isTimeUp, endCheck, endSession, cooldownUntil, phaseOf,
-  pauseClock, resumeClock, type Session, type Committed,
+  pauseClock, resumeClock, naturalEndAt, type Session, type Committed,
 } from '../../src/core/session';
 
 const MIN = 60_000;
@@ -22,7 +22,8 @@ describe('clock', () => {
   });
 
   test('a paused clock moves the end later when pause-stops-clock is on', () => {
-    const s = pauseClock(forSession(), T0 + 10 * MIN);
+    const live = { a: committed({ playing: false, lastSeen: T0 + 15 * MIN }) };
+    const s = { ...pauseClock(forSession(), T0 + 10 * MIN, 'a'), committed: live };
     expect(effectiveEnd(s, T0 + 15 * MIN)).toBe(T0 + 35 * MIN);
     const resumed = resumeClock(s, T0 + 15 * MIN);
     expect(resumed.pausedMs).toBe(5 * MIN);
@@ -30,7 +31,7 @@ describe('clock', () => {
   });
 
   test('pausing does nothing when pause-stops-clock is off', () => {
-    const s = pauseClock(forSession(30, { ...DEFAULT_SETTINGS, pauseStopsClock: false }), T0 + 10 * MIN);
+    const s = pauseClock(forSession(30, { ...DEFAULT_SETTINGS, pauseStopsClock: false }), T0 + 10 * MIN, 'a');
     expect(effectiveEnd(s, T0 + 15 * MIN)).toBe(T0 + 30 * MIN);
   });
 
@@ -40,7 +41,7 @@ describe('clock', () => {
   });
 
   test('until mode ignores pauses', () => {
-    const s = pauseClock(startSession({ mode: 'until', untilAt: T0 + 45 * MIN, intention: '' }, DEFAULT_SETTINGS, T0), T0 + 5 * MIN);
+    const s = pauseClock(startSession({ mode: 'until', untilAt: T0 + 45 * MIN, intention: '' }, DEFAULT_SETTINGS, T0), T0 + 5 * MIN, 'a');
     expect(effectiveEnd(s, T0 + 30 * MIN)).toBe(T0 + 45 * MIN);
   });
 
@@ -143,5 +144,35 @@ describe('phases', () => {
   test('cooldown of zero goes straight back to the gate after the end screen', () => {
     const s = endSession(forSession(30, { ...DEFAULT_SETTINGS, cooldownMinutes: 0 }), 'done', T0 + MIN);
     expect(phaseOf({ ...s, endSeen: true }, T0 + MIN)).toBe('gate');
+  });
+});
+
+describe('review fixes', () => {
+  test('a pause stops counting once the pausing tab goes quiet', () => {
+    let s = pauseClock(forSession(), T0 + 10 * MIN, 'a');
+    s = { ...s, committed: { a: committed({ playing: false, pausedSince: T0 + 10 * MIN, lastSeen: T0 + 12 * MIN }) } };
+    // The tab closed at +12; at +60 the pause only counts the 2 minutes we saw it.
+    expect(effectiveEnd(s, T0 + 60 * MIN)).toBe(T0 + 32 * MIN);
+    expect(resumeClock(s, T0 + 60 * MIN).pausedMs).toBe(2 * MIN);
+  });
+
+  test('a pause whose tab entry vanished does not stretch the session', () => {
+    const s = pauseClock(forSession(), T0 + 10 * MIN, 'gone');
+    expect(effectiveEnd(s, T0 + 40 * MIN)).toBe(T0 + 30 * MIN);
+  });
+
+  test('after a long sleep the session ends at its real end time', () => {
+    const s = forSession();
+    const lastActive = T0 + 20 * MIN;
+    const wake = T0 + 5 * 60 * MIN;
+    expect(naturalEndAt(s, 'not-watching', wake, lastActive)).toBe(T0 + 30 * MIN);
+    // Woke before the end time passed: ends at the last moment we were awake.
+    expect(naturalEndAt(s, 'not-watching', wake, T0 + 40 * MIN)).toBe(T0 + 40 * MIN);
+  });
+
+  test('normal endings are dated now', () => {
+    const s = forSession();
+    expect(naturalEndAt(s, 'not-watching', T0 + 31 * MIN, T0 + 31 * MIN - 1000)).toBe(T0 + 31 * MIN);
+    expect(naturalEndAt(s, 'done', T0 + 5 * 60 * MIN, T0)).toBe(T0 + 5 * 60 * MIN);
   });
 });

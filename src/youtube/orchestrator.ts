@@ -2,7 +2,7 @@ import type { Settings } from '../core/settings';
 import { DEFAULT_SETTINGS } from '../core/settings';
 import {
   endCheck, endSession, effectiveEnd, isTimeUp, phaseOf, pauseClock, resumeClock, timeLeftMs, cooldownUntil,
-  HEARTBEAT_STALE_MS, type Session, type EndReason,
+  naturalEndAt, HEARTBEAT_STALE_MS, type Session, type EndReason, type Committed,
 } from '../core/session';
 import { formatClock } from '../core/time';
 import { sessionItem, settingsItem, safeStorage, onContextLost } from '../shared/storage';
@@ -11,7 +11,6 @@ import { applyTiles, hideShortsChips } from './tiles';
 import { setFlags, markOff, shortsRedirect } from './page-flags';
 import { onBridge } from './bridge';
 import { createWatchMonitor } from './watch';
-import { SEL } from './selectors';
 import { getHost, showScreen, clearScreen } from '../ui/host';
 import { renderStart } from '../ui/screens/start';
 import { renderEnd } from '../ui/screens/end';
@@ -46,6 +45,10 @@ export function createOrchestrator(deps: OrchestratorDeps) {
   let startedHere: string | null = null;
   let lastHeartbeat = 0;
   let lastTiles = 0;
+  let lastTickAt = now();
+  let tileTimer: ReturnType<typeof setTimeout> | undefined;
+  /** This tab's own committed video, kept locally so the heartbeat can always (re)write it. */
+  let myEntry: Committed | null = null;
   let stopped = false;
   const lengths = new Map<string, number>();
   const cleanups: Array<() => void> = [];
@@ -76,10 +79,9 @@ export function createOrchestrator(deps: OrchestratorDeps) {
     onCommit: ({ videoId, live }) => {
       const at = now();
       lastHeartbeat = at;
-      void mutate((s) => ({
-        ...s,
-        committed: { ...s.committed, [tabKey]: { videoId, live, playing: true, pausedSince: null, remainingAtTimeUpMs: null, lastSeen: at } },
-      }));
+      const entry: Committed = { videoId, live, playing: true, pausedSince: null, remainingAtTimeUpMs: null, lastSeen: at };
+      myEntry = entry;
+      void mutate((s) => ({ ...s, committed: { ...s.committed, [tabKey]: entry } }));
       if (live && session) showHelper(t('helperLive', formatClock(effectiveEnd(session, at))));
     },
     onDoesntFit: ({ seconds }) => {
@@ -99,15 +101,16 @@ export function createOrchestrator(deps: OrchestratorDeps) {
     onMovedOn: () => void endNow('moved-on'),
     onPlayState: (playing) => {
       const at = now();
+      if (!myEntry) return;
+      myEntry = { ...myEntry, playing, pausedSince: playing ? null : at, lastSeen: at };
+      const entry = myEntry;
       void mutate((s) => {
-        const mine = s.committed[tabKey];
-        if (!mine) return s;
         let next: Session = {
           ...s,
-          committed: { ...s.committed, [tabKey]: { ...mine, playing, pausedSince: playing ? null : at, lastSeen: at } },
+          committed: { ...s.committed, [tabKey]: { ...entry, remainingAtTimeUpMs: s.committed[tabKey]?.remainingAtTimeUpMs ?? null } },
         };
         if (s.mode === 'for' && s.rules.pauseStopsClock && !isTimeUp(s, at)) {
-          next = playing ? resumeClock(next, at) : pauseClock(next, at);
+          next = playing ? resumeClock(next, at) : pauseClock(next, at, tabKey);
         }
         return next;
       });
@@ -118,6 +121,7 @@ export function createOrchestrator(deps: OrchestratorDeps) {
 
   function releaseCommitted(): Promise<void> {
     const at = now();
+    myEntry = null;
     return mutate((s) => {
       if (!s.committed[tabKey]) return s;
       const rest = { ...s.committed };
@@ -199,7 +203,11 @@ export function createOrchestrator(deps: OrchestratorDeps) {
   function refreshTiles(force = false): void {
     if (!session || phaseOf(session, now()) !== 'active') return;
     const at = now();
-    if (!force && at - lastTiles < 150) return;
+    if (!force && at - lastTiles < 150) {
+      // Throttled: make sure a trailing pass still runs so a changed tile never lingers.
+      tileTimer ??= setTimeout(() => { tileTimer = undefined; refreshTiles(true); }, 150);
+      return;
+    }
     lastTiles = at;
     applyTiles(document, timeLeftMs(session, at), lengths);
     hideShortsChips(document);
@@ -210,6 +218,8 @@ export function createOrchestrator(deps: OrchestratorDeps) {
     const redirect = shortsRedirect(location.href);
     if (redirect) { deps.navigate(redirect); return; }
     const s = session;
+    const previousTick = lastTickAt;
+    lastTickAt = now();
     if (!s || phaseOf(s, now()) !== 'active') return;
     const at = now();
     getHost();
@@ -218,21 +228,20 @@ export function createOrchestrator(deps: OrchestratorDeps) {
     mountPill({ endAt: effectiveEnd(s, at), onDone: () => void endNow('done') });
     if (at - lastTiles >= TILE_REFRESH_MS) refreshTiles(true);
 
-    const mine = s.committed[tabKey];
+    const mine = myEntry;
     if (mine && monitor.committed()) {
       const timeUp = isTimeUp(s, at);
-      const needsRemaining = timeUp && mine.remainingAtTimeUpMs == null;
-      if (needsRemaining || at - lastHeartbeat >= HEARTBEAT_MS) {
+      const stored = s.committed[tabKey];
+      const needsRemaining = timeUp && stored?.remainingAtTimeUpMs == null;
+      if (!stored || needsRemaining || at - lastHeartbeat >= HEARTBEAT_MS) {
         lastHeartbeat = at;
-        const v = document.querySelector<HTMLVideoElement>(SEL.mainVideo);
-        const remaining = v && Number.isFinite(v.duration) ? Math.max(0, (v.duration - v.currentTime) * 1000) : 0;
+        const remaining = timeUp ? monitor.remainingMs() : null; // null during ads: try again next tick
         await mutate((x) => {
           const c = x.committed[tabKey];
-          if (!c) return x;
-          return {
-            ...x,
-            committed: { ...x.committed, [tabKey]: { ...c, lastSeen: at, remainingAtTimeUpMs: c.remainingAtTimeUpMs ?? (timeUp ? remaining : null) } },
-          };
+          // Upsert: if another tab's stale write dropped our entry, put it back.
+          const entry: Committed = { ...(c ?? mine), playing: mine.playing, pausedSince: mine.pausedSince, lastSeen: at,
+            remainingAtTimeUpMs: c?.remainingAtTimeUpMs ?? remaining };
+          return { ...x, committed: { ...x.committed, [tabKey]: entry } };
         });
       }
       if (timeUp && mine.playing && !mine.live && !lastOneShown.has(s.id)) {
@@ -244,7 +253,7 @@ export function createOrchestrator(deps: OrchestratorDeps) {
     const current = session;
     if (current) {
       const reason = endCheck(current, at);
-      if (reason) await endNow(reason);
+      if (reason) await mutate((x) => endSession(x, reason, at, naturalEndAt(x, reason, at, previousTick)));
     }
   }
 
@@ -273,11 +282,36 @@ export function createOrchestrator(deps: OrchestratorDeps) {
     session = (await safeStorage(() => sessionItem.getValue())) ?? null;
     render();
 
-    cleanups.push(sessionItem.watch((v) => { session = v; render(); }));
+    cleanups.push(sessionItem.watch((v) => {
+      // An ending is final: if another tab's stale write would un-end this session, write the ending back.
+      if (session?.endedAt != null && v && v.id === session.id && v.endedAt == null) {
+        const kept: Session = { ...v, endedAt: session.endedAt, endReason: session.endReason, endSeen: v.endSeen || session.endSeen,
+          committed: {}, clockPausedSince: null, clockPausedBy: null };
+        session = kept;
+        void safeStorage(() => sessionItem.setValue(kept));
+        render();
+        return;
+      }
+      session = v;
+      render();
+    }));
     cleanups.push(settingsItem.watch((v) => { settings = v ?? DEFAULT_SETTINGS; }));
 
     const observer = new MutationObserver(() => refreshTiles());
-    observer.observe(document.documentElement, { childList: true, subtree: true });
+    observer.observe(document.documentElement, {
+      childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href'],
+    });
+    cleanups.push(() => clearTimeout(tileTimer));
+    // A paused video only stops the clock while its tab is in front.
+    const onVisibility = () => {
+      const s = session;
+      if (!s || !myEntry || myEntry.playing || s.mode !== 'for' || !s.rules.pauseStopsClock) return;
+      const at = now();
+      if (document.visibilityState === 'hidden') void mutate((x) => (x.clockPausedBy === tabKey ? resumeClock(x, at) : x));
+      else if (!isTimeUp(s, at)) void mutate((x) => pauseClock(x, at, tabKey));
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    cleanups.push(() => document.removeEventListener('visibilitychange', onVisibility));
     cleanups.push(() => observer.disconnect());
 
     const onNav = () => { refreshTiles(true); void tick(); };
@@ -303,5 +337,5 @@ export function createOrchestrator(deps: OrchestratorDeps) {
     cleanups.push(() => clearInterval(timer));
   }
 
-  return { start, stop, tick, render, mutate, staleAfterMs: HEARTBEAT_STALE_MS };
+  return { start, stop, tick, render, mutate, refreshTiles, staleAfterMs: HEARTBEAT_STALE_MS };
 }
