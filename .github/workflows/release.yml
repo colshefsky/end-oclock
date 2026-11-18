@@ -1,0 +1,27 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      # One folder named end-oclock inside the zip, so unzipping always gives the same folder name.
+      - run: |
+          rm -rf dist && mkdir -p dist/end-oclock
+          cp -R .output/chrome-mv3/. dist/end-oclock/
+          cp LICENSE PRIVACY.md dist/end-oclock/
+          cd dist && zip -qr end-oclock.zip end-oclock
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/end-oclock.zip --title "End O'Clock $GITHUB_REF_NAME" --generate-notes
