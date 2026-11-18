@@ -1,4 +1,51 @@
 {
   "extName": { "message": "End O'Clock" },
-  "extDescription": { "message": "Pick an ending before you watch. Only see videos that fit. No Shorts, no autoplay, and a real stopping point." }
+  "extDescription": { "message": "Pick an ending before you watch. Only see videos that fit. No Shorts, no autoplay, and a real stopping point." },
+
+  "eyebrow": { "message": "End O'Clock" },
+  "startBubble": { "message": "Howdy! Before we press play, when do you want to be done?" },
+  "startTitle": { "message": "When does this end?" },
+  "tabFor": { "message": "For a while" },
+  "tabUntil": { "message": "Until a time" },
+  "chipMinutes": { "message": "$1 min" },
+  "chipHour": { "message": "1 hr" },
+  "customMinutesPrefix": { "message": "or" },
+  "customMinutesLabel": { "message": "Custom minutes" },
+  "customMinutesPlaceholder": { "message": "mins" },
+  "untilLabel": { "message": "Done at" },
+  "intentionLabel": { "message": "After this, I'm going to…" },
+  "intentionPlaceholder": { "message": "make dinner, go for a walk, start that email" },
+  "endsAt": { "message": "Ends at $1" },
+  "pauseNote": { "message": "Pausing a video pauses the clock" },
+  "startButton": { "message": "Start watching" },
+  "closeTabLink": { "message": "Never mind, close this tab" },
+  "errTooLong": { "message": "That's longer than your longest session ($1)." },
+  "errTooShort": { "message": "Pick at least 1 minute." },
+  "errPickTime": { "message": "Pick a time." },
+
+  "pillDoneBy": { "message": "Done by $1" },
+  "pillDone": { "message": "I'm done" },
+  "helperGotIt": { "message": "Got it" },
+  "helperStart": { "message": "Everything you see here fits. No rush. I'll let you know when we're wrapped up." },
+  "helperLastOne": { "message": "This one's the last one. Enjoy it." },
+  "helperLive": { "message": "Live streams wrap up at $1." },
+
+  "endTitle": { "message": "That's a wrap!" },
+  "endText": { "message": "You stopped right when you said you would. Nice work." },
+  "endNextUp": { "message": "Next up:" },
+  "endCloseNow": { "message": "Close tab now" },
+  "endAutoClose": { "message": "Closing on its own in $1s" },
+  "endDone": { "message": "Done" },
+
+  "cooldownTitle": { "message": "YouTube is napping" },
+  "cooldownText": { "message": "Your next session opens at $1, in $2." },
+  "cooldownSaid": { "message": "You said you'd:" },
+  "closeTab": { "message": "Close tab" },
+
+  "doesntFitTitle": { "message": "This one won't fit" },
+  "doesntFitText": { "message": "It's $1 long, and you're done by $2. Save it for another session?" },
+  "doesntFitLiveText": { "message": "Live streams wrap up at $1." },
+  "saveLater": { "message": "Save to Watch Later" },
+  "saveLaterCopied": { "message": "Link copied. Paste it somewhere for later." },
+  "findShorter": { "message": "Find something shorter" }
 }
