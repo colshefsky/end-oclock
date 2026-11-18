@@ -23,7 +23,7 @@ export function renderPopup(session: Session | null, now: number, openSettings: 
   settings.addEventListener('click', openSettings);
   return h('main', { class: 'eoc-popup' },
     h('div', { class: 'eoc-row', style: 'gap:10px;flex-wrap:nowrap' },
-      h('img', { src: '/icon/32.png', alt: '', width: '32', height: '32' }),
+      h('img', { src: '/icon/128.png', alt: '', width: '32', height: '32' }),
       h('div', { style: "font-family:var(--display);font-size:20px" }, t('extName'))),
     h('div', { class: 'eoc-popup-status' },
       h('img', { src: mascotUrl(pose), alt: '', width: '72', height: '72' }),

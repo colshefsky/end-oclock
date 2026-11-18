@@ -33,3 +33,9 @@ test('the only button opens settings; nothing starts or extends a session', () =
   buttons[0]!.click();
   expect(openSettings).toHaveBeenCalled();
 });
+
+test('the header icon is sharp on high-density screens', () => {
+  const img = renderPopup(null, T0, vi.fn()).querySelector('img')!;
+  expect(img.getAttribute('src')).toBe('/icon/128.png');
+  expect(img.getAttribute('width')).toBe('32');
+});

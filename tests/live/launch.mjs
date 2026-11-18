@@ -6,7 +6,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-const EXT = resolve('.output/chrome-mv3');
+const EXT = process.env.EOC_EXT ?? resolve('.output/chrome-mv3');
 const browsers = {
   chrome: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   vivaldi: '/Applications/Vivaldi.app/Contents/MacOS/Vivaldi',

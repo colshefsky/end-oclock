@@ -130,7 +130,7 @@ function renderForm(initial: Settings, onSave: (s: Settings) => void, onLock: ()
         h('div', { class: 'eoc-badge' }, t('settingsBadge')));
   const footer = welcome
     ? h('div', { class: 'eoc-row', style: 'justify-content:space-between' },
-        h('div', { class: 'eoc-pin' }, h('img', { src: '/icon/16.png', alt: '', width: '16', height: '16' }),
+        h('div', { class: 'eoc-pin' }, h('img', { src: '/icon/48.png', alt: '', width: '16', height: '16' }),
           h('span', {}, h('span', { class: 'eoc-strong' }, t('welcomePinLabel')), ' ', t('welcomePin'))),
         save)
     : h('div', { class: 'eoc-row', style: 'justify-content:flex-end' }, lock, save);

@@ -1,6 +1,6 @@
 {
   "name": "end-oclock",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Pick an ending before you watch YouTube. Only see videos that fit.",
   "license": "MIT",
