@@ -1,0 +1,11 @@
+import { launch } from './launch.mjs';
+const out = process.argv[2];
+const { browser, ctx, extId } = await launch('chrome', 9555);
+const page = await ctx.newPage();
+const s = await ctx.newCDPSession(page);
+await s.send('Emulation.setDeviceMetricsOverride', { width: 340, height: 250, deviceScaleFactor: 2, mobile: false });
+await page.goto(`chrome-extension://${extId}/popup.html`);
+await page.waitForTimeout(1500);
+console.log('dpr', await page.evaluate(() => devicePixelRatio));
+await page.screenshot({ path: out, clip: { x: 0, y: 0, width: 220, height: 70 } });
+await browser.close();
