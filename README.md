@@ -7,7 +7,7 @@ Free, open source, and it never collects anything about you.</p>
 
 <p align="center"><img src="docs/images/start.png" width="760" alt="The End O'Clock start screen: a friendly cartoon alarm clock asks 'When does this end?' with choices like 30 minutes or until a time"></p>
 
-## ⬇️ [Download End O'Clock](https://github.com/olshefskyc/end-oclock/releases/latest/download/end-oclock.zip)
+## ⬇️ [Download End O'Clock](https://github.com/colshefsky/end-oclock/releases/latest/download/end-oclock.zip)
 
 Works in **Chrome, Edge, Brave, Opera, Vivaldi, Arc, Ardia** and other Chromium-based browsers. Setup takes about two minutes, and you'll only do it once.
 
@@ -17,7 +17,7 @@ Works in **Chrome, Edge, Brave, Opera, Vivaldi, Arc, Ardia** and other Chromium-
 
 > End O'Clock isn't in the Chrome Web Store yet, so you add it yourself. It's safe and takes a few clicks.
 
-**1. Download it.** Click **[Download End O'Clock](https://github.com/olshefskyc/end-oclock/releases/latest/download/end-oclock.zip)**. A file called `end-oclock.zip` lands in your Downloads.
+**1. Download it.** Click **[Download End O'Clock](https://github.com/colshefsky/end-oclock/releases/latest/download/end-oclock.zip)**. A file called `end-oclock.zip` lands in your Downloads.
 
 **2. Unzip it.** Double-click `end-oclock.zip`. You'll get a folder called **end-oclock**.
 Move that folder somewhere it can stay for good, like your **Documents** folder. (If you delete the folder later, the extension goes away too.)

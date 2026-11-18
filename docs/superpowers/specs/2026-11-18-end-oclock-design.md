@@ -45,7 +45,7 @@ We are taking the stop-time ideas only, not Clockwise's curated educational cont
 ## 3. Constraints
 
 - Chrome, Manifest V3. Content scripts only on `https://www.youtube.com/*`.
-- License: MIT, public repo on the owner's personal GitHub (`olshefskyc`). Most similar open-source extensions are GPL: borrow patterns, never code. The MIT Shorts selector list from `gijsdev/ublock-hide-yt-shorts` may be reused with attribution.
+- License: MIT, public repo on the owner's personal GitHub (`colshefsky`). Most similar open-source extensions are GPL: borrow patterns, never code. The MIT Shorts selector list from `gijsdev/ublock-hide-yt-shorts` may be reused with attribution.
 - Minimal permissions: `storage`, `alarms` (if needed). No remote code, no network requests of our own.
 - Project rules in `CLAUDE.md`: mockup first for anything visual (approved in the Artifact before it's built), character art comes from Codex, mascot must stay original, never use the name Clockwise.
 

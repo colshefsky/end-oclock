@@ -316,7 +316,7 @@ docs/smoke-test.md
 
 **Files:** Create `README.md`, `PRIVACY.md`, `CONTRIBUTING.md`, `.github/ISSUE_TEMPLATE/{bug.yml,feature.yml}`, `docs/images/*` (screenshots captured by a Playwright script `tests/e2e/screenshots.spec.ts` against fixtures).
 
-- README order (spec §7.1): name + one-line pitch + hero screenshot; big **Download End O'Clock** link to `https://github.com/olshefskyc/end-oclock/releases/latest/download/end-oclock.zip`; numbered illustrated install steps with a per-browser address table (`chrome://extensions`, `edge://extensions`, `brave://extensions`, `opera://extensions`, `vivaldi://extensions`, Arc: `arc://extensions`); "Is this safe?"; how to update; known rough edges; what it does (with screenshots); credit to Hank Green's video and commenters + "not affiliated with Clockwise TV" (the only place the name appears, as attribution); MIT; developer section last. No "manifest/build/clone/npm" wording above the developer section.
+- README order (spec §7.1): name + one-line pitch + hero screenshot; big **Download End O'Clock** link to `https://github.com/colshefsky/end-oclock/releases/latest/download/end-oclock.zip`; numbered illustrated install steps with a per-browser address table (`chrome://extensions`, `edge://extensions`, `brave://extensions`, `opera://extensions`, `vivaldi://extensions`, Arc: `arc://extensions`); "Is this safe?"; how to update; known rough edges; what it does (with screenshots); credit to Hank Green's video and commenters + "not affiliated with Clockwise TV" (the only place the name appears, as attribution); MIT; developer section last. No "manifest/build/clone/npm" wording above the developer section.
 - PRIVACY.md: no data collected, nothing leaves the browser, storage is local only, permissions explained one line each.
 - [ ] **Step 1:** Write docs; generate screenshots (`npx playwright test screenshots`).
 - [ ] **Step 2:** Verify: `grep -n -i -E "manifest|npm|clone|build" README.md` hits only below the "For developers" heading.
@@ -328,7 +328,7 @@ docs/smoke-test.md
 
 - Release workflow on tag `v*`: `npm ci`, test, `wxt zip`, rename the Chrome zip to `end-oclock.zip`, create a GitHub release with it attached (so the README's `latest/download/end-oclock.zip` link works).
 - [ ] **Step 1:** Write the workflow; commit `ci: release workflow`.
-- [ ] **Step 2:** Confirm with the owner, then `gh repo create olshefskyc/end-oclock --public --source . --push --description "Pick an ending before you watch YouTube. Only see videos that fit."`.
+- [ ] **Step 2:** Confirm with the owner, then `gh repo create colshefsky/end-oclock --public --source . --push --description "Pick an ending before you watch YouTube. Only see videos that fit."`.
 - [ ] **Step 3:** Confirm CI is green on GitHub (`gh run list --limit 1`).
 - [ ] **Step 4:** Bump `package.json` to `1.0.0`, tag `v1.0.0`, push the tag; verify `gh release view v1.0.0` lists `end-oclock.zip` and the README download link returns HTTP 302 → 200.
 - [ ] **Step 5:** Run `docs/smoke-test.md` against the downloaded zip in Chrome; report results to the owner.
