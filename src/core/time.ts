@@ -2,7 +2,7 @@ const LENGTH_RE = /^(?:(\d+):)?([0-5]?\d):([0-5]\d)$/;
 
 /** Parses YouTube length badges like "3:15" or "1:02:03" into seconds. */
 export function parseLength(text: string): number | null {
-  const m = LENGTH_RE.exec(text.replace(/[\s  ]+/g, ''));
+  const m = LENGTH_RE.exec(text.replace(/[\s\u00a0\u202f]+/g, ''));
   if (!m) return null;
   return Number(m[1] ?? 0) * 3600 + Number(m[2]) * 60 + Number(m[3]);
 }
@@ -19,7 +19,7 @@ export function nextOccurrence(hhmm: string, now: number): number {
 export function formatClock(ts: number, locale?: string): string {
   return new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit' })
     .format(ts)
-    .replace(/[  ]/g, ' ');
+    .replace(/[\u202f\u00a0]/g, ' ');
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
