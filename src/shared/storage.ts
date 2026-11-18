@@ -1,8 +1,13 @@
 import { storage } from 'wxt/utils/storage';
 import { DEFAULT_SETTINGS, type Settings } from '../core/settings';
+import type { Session } from '../core/session';
 
 export const settingsItem = storage.defineItem<Settings>('local:settings', {
   fallback: DEFAULT_SETTINGS,
+});
+
+export const sessionItem = storage.defineItem<Session | null>('local:session', {
+  fallback: null,
 });
 
 export const firstRunDoneItem = storage.defineItem<boolean>('local:firstRunDone', {
